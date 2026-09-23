@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Simple Sandbox Lab</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f1621;
+    color: #dbe4f0;
+    margin: 0;
+    padding: 24px;
+  }
+  .wrap { max-width: 820px; margin: 0 auto; }
+  h1 { font-size: 20px; margin-bottom: 4px; }
+  .subtitle { color: #8a97ab; font-size: 13px; margin-bottom: 18px; }
+  .banner {
+    background: rgba(239,68,68,0.1);
+    border: 1px solid rgba(239,68,68,0.4);
+    color: #ffb4b4;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12.5px;
+    margin-bottom: 20px;
+  }
+  .panel {
+    background: #161f2e;
+    border: 1px solid #2a3548;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .panel h2 { font-size: 14px; margin: 0 0 4px; }
+  .panel .desc { color: #8a97ab; font-size: 12px; margin-bottom: 10px; }
+  textarea {
+    width: 100%;
+    min-height: 160px;
+    background: #0b1119;
+    border: 1px solid #2a3548;
+    border-radius: 8px;
+    color: #dbe4f0;
+    padding: 10px 12px;
+    font-family: "Courier New", monospace;
+    font-size: 12.5px;
+    resize: vertical;
+  }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  button {
+    background: #4c8dff;
+    color: #04101f;
+    border: none;
+    border-radius: 7px;
+    padding: 8px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  button.secondary { background: #1c2839; color: #dbe4f0; border: 1px solid #2a3548; }
+  button.ghost { background: transparent; color: #38bdf8; border: 1px solid rgba(76,141,255,0.4); }
+  button:hover { filter: brightness(1.1); }
+  .checkbox-row { display: flex; gap: 16px; flex-wrap: wrap; margin: 10px 0; }
+  .checkbox-item { display: flex; align-items: center; gap: 6px; font-size: 12.5px; }
+  code, pre {
+    font-family: "Courier New", monospace;
+  }
+  pre.codeblock {
+    background: #0b1119;
+    border: 1px solid #2a3548;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    color: #38bdf8;
+    overflow-x: auto;
+  }
+  iframe {
+    width: 100%;
+    height: 260px;
+    border: 1px solid #2a3548;
+    border-radius: 8px;
+    background: #fff;
+    margin-top: 10px;
+  }
+  #target { border: 1px dashed #2a3548; border-radius: 6px; padding: 10px; font-size: 12.5px; color: #8a97ab; margin-top: 8px; }
+  #result-log {
+    background: #0b1119;
+    border: 1px solid #2a3548;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    margin-top: 10px;
+    min-height: 20px;
+  }
+  #result-log .ok { color: #2ecc71; font-weight: 700; }
+  #result-log .no { color: #ef4444; font-weight: 700; }
+  .example-list { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Simple Sandbox Lab</h1>
+  <div class="subtitle">A sandboxed iframe running JavaScript is not automatically "safe from XSS" — what it can do depends on the sandbox permissions you set.</div>
+  <div class="banner">
+    <strong>LOCAL TRAINING TOOL — INTENTIONALLY VULNERABLE — LOCALHOST ONLY.</strong>
+    Whatever you paste below is stored unsanitized and rendered inside the iframe exactly as written. Nothing is filtered.
+  </div>
+
+  <div class="panel">
+    <h2>1. Paste any HTML/JavaScript</h2>
+    <div class="desc">This is completely freeform — paste anything you want to test. Nothing is restricted or pre-validated.</div>
+    <textarea id="payload" spellcheck="false"></textarea>
+    <div class="btn-row">
+      <button id="btn-render">Render</button>
+      <button class="secondary" id="btn-clear">Clear</button>
+    </div>
+    <div class="desc" style="margin-top:12px;">Optional starting points (just fill the textarea — edit freely before rendering):</div>
+    <div class="example-list">
+      <button class="ghost" data-example="js">JS execution</button>
+      <button class="ghost" data-example="parent">Reach parent page</button>
+      <button class="ghost" data-example="popup">Open popup</button>
+      <button class="ghost" data-example="nav">Navigate whole tab</button>
+      <button class="ghost" data-example="form">Submit a form</button>
+      <button class="ghost" data-example="modal">Trigger a modal</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>2. Sandbox permissions</h2>
+    <div class="desc">These build the <code>sandbox="..."</code> attribute on the iframe below. Toggle them and click Apply to see how the same pasted code behaves differently.</div>
+    <div class="checkbox-row">
+      <label class="checkbox-item"><input type="checkbox" id="perm-scripts" checked> allow-scripts</label>
+      <label class="checkbox-item"><input type="checkbox" id="perm-same-origin"> allow-same-origin</label>
+      <label class="checkbox-item"><input type="checkbox" id="perm-forms"> allow-forms</label>
+      <label class="checkbox-item"><input type="checkbox" id="perm-popups"> allow-popups</label>
+      <label class="checkbox-item"><input type="checkbox" id="perm-top-nav"> allow-top-navigation</label>
+      <label class="checkbox-item"><input type="checkbox" id="perm-modals"> allow-modals</label>
+    </div>
+    <button id="btn-apply">Apply Sandbox Configuration</button>
+  </div>
+
+  <div class="panel">
+    <h2>3. Result</h2>
+    <div class="desc">Resulting attribute currently applied to the iframe:</div>
+    <pre class="codeblock" id="attr-display">sandbox="allow-scripts"</pre>
+
+    <div class="desc" style="margin-top:10px;">Dedicated element the "reach parent page" test may touch (nothing else on this page is a valid target):</div>
+    <div id="target">(untouched)</div>
+
+    <iframe id="frame" sandbox="allow-scripts" src="/render"></iframe>
+
+    <div class="desc" style="margin-top:10px;">If your pasted code calls <code>reportResult(label, true/false, detail)</code>, it shows up here automatically. Otherwise, just watch the iframe above directly.</div>
+    <div id="result-log">No result reported yet.</div>
+  </div>
+</div>
+
+<script>
+  const payloadEl = document.getElementById("payload");
+  const frame = document.getElementById("frame");
+  const attrDisplay = document.getElementById("attr-display");
+  const resultLog = document.getElementById("result-log");
+  const targetEl = document.getElementById("target");
+
+  const EXAMPLES = {
+    js: `<script>\ndocument.body.innerHTML = "<h2>JavaScript executed</h2>";\nreportResult("JS execution", true, "The script ran inside the iframe.");\n<\\/script>`,
+    parent: `<script>\ntry {\n  parent.document.getElementById("target").textContent = "Modified by iframe script";\n  reportResult("Reach parent page", true, "parent.document was accessible.");\n} catch (e) {\n  reportResult("Reach parent page", false, String(e));\n}\n<\\/script>`,
+    popup: `<button onclick="\n  var w = window.open('about:blank','_blank');\n  reportResult('Open popup', !!w, w ? 'window.open succeeded' : 'window.open returned null');\n">Click to test popup<\/button>`,
+    nav: `<button onclick="\n  reportResult('Navigate whole tab', true, 'Attempting top.location change...');\n  top.location.href = '/navigated';\n">Click to test top-level navigation<\/button>`,
+    form: `<form onsubmit="\n  reportResult('Submit form', true, 'submit event fired');\n  return false;\n">\n  <input name=\"test\" value=\"hello\">\n  <button type=\"submit\">Submit<\/button>\n<\/form>`,
+    modal: `<button onclick="\n  var v = alert('Sandbox modal test');\n  reportResult('Trigger modal', true, 'alert() call did not throw');\n">Click to test alert()<\/button>`,
+  };
+
+  document.querySelectorAll("[data-example]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      payloadEl.value = EXAMPLES[btn.dataset.example];
+    });
+  });
+
+  function buildAttr() {
+    const perms = [];
+    if (document.getElementById("perm-scripts").checked) perms.push("allow-scripts");
+    if (document.getElementById("perm-same-origin").checked) perms.push("allow-same-origin");
+    if (document.getElementById("perm-forms").checked) perms.push("allow-forms");
+    if (document.getElementById("perm-popups").checked) perms.push("allow-popups");
+    if (document.getElementById("perm-top-nav").checked) perms.push("allow-top-navigation");
+    if (document.getElementById("perm-modals").checked) perms.push("allow-modals");
+    return perms.join(" ");
+  }
+
+  function applyAttr() {
+    const attr = buildAttr();
+    frame.setAttribute("sandbox", attr);
+    attrDisplay.textContent = attr ? `sandbox="${attr}"` : `sandbox=""`;
+  }
+
+  async function render() {
+    await fetch("/store", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ payload: payloadEl.value }),
+    });
+    applyAttr();
+    frame.src = "/render?_=" + Date.now();
+  }
+
+  document.getElementById("btn-render").addEventListener("click", render);
+  document.getElementById("btn-clear").addEventListener("click", () => { payloadEl.value = ""; });
+  document.getElementById("btn-apply").addEventListener("click", render);
+
+  window.addEventListener("message", (event) => {
+    const data = event.data;
+    if (!data || data.type !== "sandbox-result") return;
+    const cls = data.ok ? "ok" : "no";
+    const word = data.ok ? "SUCCEEDED" : "BLOCKED";
+    resultLog.innerHTML = `<span class="${cls}">${data.label}: ${word}</span> — ${data.detail}`;
+    if (data.label === "Reach parent page" && data.ok) {
+      targetEl.textContent = "Modified by sandboxed iframe script";
+    }
+  });
+
+  // Load whatever is currently stored server-side on first open.
+  fetch("/render").then((r) => r.text()).then(() => {
+    payloadEl.value = EXAMPLES.js;
+  });
+
+  applyAttr();
+</script>
+</body>
+</html>

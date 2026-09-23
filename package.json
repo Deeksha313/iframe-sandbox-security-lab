@@ -1,0 +1,13 @@
+{
+  "name": "simple-sandbox-lab",
+  "version": "1.0.0",
+  "description": "Minimal local lab: paste any HTML/JS payload, see it run inside a sandboxed iframe, toggle sandbox permissions.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
