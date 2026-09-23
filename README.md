@@ -228,6 +228,4 @@ so that it is intended to remain accessible only from the local machine.
 - iframe Sandbox API
 - `postMessage`
 
-## License
 
-MIT
